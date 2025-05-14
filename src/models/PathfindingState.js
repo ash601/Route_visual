@@ -1,16 +1,10 @@
 import AStar from "./algorithms/AStar";
-import BidirectionalSearch from "./algorithms/BidirectionalSearch";
 import Dijkstra from "./algorithms/Dijkstra";
-import Greedy from "./algorithms/Greedy";
 import PathfindingAlgorithm from "./algorithms/PathfindingAlgorithm";
 
 export default class PathfindingState {
     static #instance;
 
-    /**
-     * Singleton class
-     * @returns {PathfindingState}
-     */
     constructor() {
         if (!PathfindingState.#instance) {
             this.endNode = null;
@@ -19,7 +13,6 @@ export default class PathfindingState {
             this.algorithm = new PathfindingAlgorithm();
             PathfindingState.#instance = this;
         }
-    
         return PathfindingState.#instance;
     }
 
@@ -27,18 +20,10 @@ export default class PathfindingState {
         return this.graph.startNode;
     }
 
-    /**
-     * 
-     * @param {Number} id OSM node id
-     * @returns {import("./Node").default} node
-     */
     getNode(id) {
         return this.graph?.getNode(id);
     }
 
-    /**
-     * Resets to default state
-     */
     reset() {
         this.finished = false;
         if(!this.graph) return;
@@ -47,42 +32,27 @@ export default class PathfindingState {
         }
     }
 
-    /**
-     * Resets state and initializes new pathfinding animation
-     */
-    start(algorithm) {
+    start(algorithmType) {
         this.reset();
-        switch(algorithm) {
+        switch(algorithmType) {
             case "astar":
                 this.algorithm = new AStar();
-                break;
-            case "greedy":
-                this.algorithm = new Greedy();
                 break;
             case "dijkstra":
                 this.algorithm = new Dijkstra();
                 break;
-            case "bidirectional":
-                this.algorithm = new BidirectionalSearch();
-                break;
             default:
-                this.algorithm = new AStar();
+                this.algorithm = new AStar(); 
                 break;
         }
-
         this.algorithm.start(this.startNode, this.endNode);
     }
 
-    /**
-     * Progresses the pathfinding algorithm by one step/iteration
-     * @returns {(import("./Node").default)[]} array of nodes that were updated
-     */
     nextStep() {
         const updatedNodes = this.algorithm.nextStep();
         if(this.algorithm.finished || updatedNodes.length === 0) {
             this.finished = true;
         }
-
         return updatedNodes;
     }
 }

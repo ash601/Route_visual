@@ -1,8 +1,8 @@
 export const MAP_STYLE = "./map_style.json";
 
 export const INITIAL_VIEW_STATE = {
-    longitude: -0.127,
-    latitude:  51.507   ,
+    longitude: 78.0322,
+    latitude:  30.3165,
     zoom: 13,
     pitch: 0,
     bearing: 0
@@ -13,11 +13,12 @@ export const INITIAL_COLORS = {
     startNodeBorder: [255, 255, 255],
     endNodeFill: [152, 4, 12],
     endNodeBorder: [0, 0, 0],
-    path: [70, 183, 128],
+    path: [70, 183, 128], 
     route: [165, 13, 32],
 };
 
 export const LOCATIONS = [
+    { name: "Dehradun", latitude: 30.3165, longitude: 78.0322 },
     { name: "New York", latitude: 40.712, longitude: -74.006 },
     { name: "Tokyo", latitude: 35.682, longitude: 139.759 },
     { name: "Paris", latitude: 48.856, longitude: 2.352 },
