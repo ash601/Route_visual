@@ -1,13 +1,16 @@
 // src/components/Interface.jsx
-// Add TextField to imports from @mui/material
-import { Button, IconButton, Typography, Snackbar, Alert, CircularProgress, Fade, Tooltip, Drawer, MenuItem, Select, InputLabel, FormControl, Menu, TextField } from "@mui/material";
-import { PlayArrow, Settings, Movie, Pause, Search as SearchIcon } from "@mui/icons-material"; // Added SearchIcon
+import { Button, IconButton, Typography, Snackbar, Alert, CircularProgress, Fade, Tooltip, Drawer, MenuItem, Select, InputLabel, FormControl, Menu } from "@mui/material";
+import { PlayArrow, Settings, Movie, Pause } from "@mui/icons-material";
 import Slider from "./Slider";
 import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
-import { LOCATIONS } from "../config";
+import { LOCATIONS, INITIAL_COLORS } from "../config"; // Ensure INITIAL_COLORS is imported if colors prop is still expected by Map.jsx
+// import { arrayToRgb, rgbToArray } from "../helpers"; // Not needed if MuiColorInput is gone
 
-// Add onSearchByPlaceNames to the destructured props
-const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDistance, playbackOn, time, maxTime, settings, loading, timeChanged, cinematic, placeEnd, changeRadius, changeAlgorithm, setPlaceEnd, setCinematic, setSettings, startPathfinding, toggleAnimation, clearPath, changeLocation, onSearchByPlaceNames }, ref) => {
+// Note: The props list matches the "working" Map.jsx you provided
+const Interface = forwardRef(({ canStart, started, animationEnded, playbackOn, time, maxTime, settings, colors, // Original Map.jsx expects 'colors' and 'setColors'
+                                loading, timeChanged, cinematic, placeEnd, changeRadius, changeAlgorithm, 
+                                setPlaceEnd, setCinematic, setSettings, setColors, // Original Map.jsx expects 'setColors'
+                                startPathfinding, toggleAnimation, clearPath, changeLocation }, ref) => {
     const [sidebar, setSidebar] = useState(false);
     const [snack, setSnack] = useState({
         open: false,
@@ -20,10 +23,6 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
     const helperTime = useRef(4800);
     const rightDown = useRef(false);
     const leftDown = useRef(false);
-
-    // State for the input fields
-    const [startPlace, setStartPlace] = useState("");
-    const [endPlace, setEndPlace] = useState("");
 
     useImperativeHandle(ref, () => ({
         showSnack(message, type = "error") {
@@ -51,14 +50,6 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
     function closeMenu() {
         setMenuAnchor(null);
     }
-
-    const handlePlaceSearch = () => {
-        if (startPlace && endPlace) {
-            onSearchByPlaceNames(startPlace, endPlace);
-        } else {
-            setSnack({ open: true, message: "Please enter both start and end place names.", type: "info" });
-        }
-    };
 
     window.onkeydown = e => {
         if(e.code === "ArrowRight" && !rightDown.current && !leftDown.current && (!started || animationEnded)) {
@@ -104,12 +95,6 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                         Animation playback
                     </Typography>
                     <Slider disabled={!animationEnded}  value={animationEnded ? time : maxTime} min={animationEnded ? 0 : -1} max={maxTime} onChange={(e) => {timeChanged(Number(e.target.value));}} className="slider" aria-labelledby="playback-slider" />
-                     {animationEnded && pathRealDistance !== null && (
-                        <Typography variant="body2" style={{ textAlign: 'center', marginTop: '5px', color: '#C5C5C5' }}>
-                            Path Distance: {pathRealDistance.toFixed(2)} km 
-                            ({(pathRealDistance * 0.621371).toFixed(2)} miles)
-                        </Typography>
-                    )}
                 </div>
                 <IconButton disabled={!canStart} onClick={handlePlay} style={{ backgroundColor: "#46B780", width: 60, height: 60 }} size="large">
                     {(!started || animationEnded && !playbackOn) 
@@ -122,7 +107,6 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                 </div>
             </div>
 
-            {/* ... (rest of the existing UI like nav-right, loader, snackbars) ... */}
             <div className={`nav-right ${cinematic ? "cinematic" : ""}`}>
                 <Tooltip title="Open settings">
                     <IconButton onClick={() => {setSidebar(true);}} style={{ backgroundColor: "#2A2B37", width: 36, height: 36 }} size="large">
@@ -181,7 +165,6 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                 </Button>
             </div>
 
-
             <Drawer
                 className={`side-drawer ${cinematic ? "cinematic" : ""}`}
                 anchor="left"
@@ -189,58 +172,29 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                 onClose={() => {setSidebar(false);}}
             >
                 <div className="sidebar-container">
-                    {/* New Input Fields and Button */}
-                    <Typography variant="h6" gutterBottom style={{marginTop: '10px'}}>Search Places in Dehradun</Typography>
-                    <TextField
-                        label="Start Place"
-                        variant="filled"
-                        value={startPlace}
-                        onChange={(e) => setStartPlace(e.target.value)}
-                        fullWidth
-                        style={{ marginBottom: '10px', backgroundColor: '#404156'}}
-                        InputLabelProps={{style: {color: '#A8AFB3'}}}
-                        InputProps={{style: {color: '#fff'}}}
-                    />
-                    <TextField
-                        label="End Place"
-                        variant="filled"
-                        value={endPlace}
-                        onChange={(e) => setEndPlace(e.target.value)}
-                        fullWidth
-                        style={{ marginBottom: '15px', backgroundColor: '#404156'}}
-                        InputLabelProps={{style: {color: '#A8AFB3'}}}
-                        InputProps={{style: {color: '#fff'}}}
-                    />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handlePlaceSearch}
-                        disabled={loading || (started && !animationEnded)}
-                        fullWidth
-                        style={{ marginBottom: '20px', backgroundColor: '#46B780', color: '#fff' }}
-                        startIcon={<SearchIcon />}
-                    >
-                        Find Path by Names
-                    </Button>
 
-                    <FormControl variant="filled" style={{width: '100%', marginBottom: '20px'}}>
-                        <InputLabel style={{ fontSize: 14, color: '#A8AFB3' }} id="algo-select">Algorithm</InputLabel>
+                    <FormControl variant="filled">
+                        <InputLabel style={{ fontSize: 14 }} id="algo-select">Algorithm</InputLabel>
                         <Select
                             labelId="algo-select"
-                            value={settings.algorithm}
-                            onChange={e => {changeAlgorithm(e.target.value);}}
+                            value={settings.algorithm} // This comes from Map.jsx's settings state
+                            onChange={e => {changeAlgorithm(e.target.value);}} // This is a prop from Map.jsx
                             required
-                            style={{ backgroundColor: "#404156", color: "#fff", width: "100%"}}
+                            style={{ backgroundColor: "#404156", color: "#fff", width: "100%", paddingLeft: 1 }}
                             inputProps={{MenuProps: {MenuListProps: {sx: {backgroundColor: "#404156"}}}}}
                             size="small"
                             disabled={!animationEnded && started}
                         >
+                            {/* Only A* and Dijkstra, or all original if Map.jsx still supports all */}
                             <MenuItem value={"astar"}>A* algorithm</MenuItem>
                             <MenuItem value={"dijkstra"}>Dijkstra&apos;s algorithm</MenuItem>
+                            {/* For safety, if your "working Map.jsx" used all algorithms, you might need these back temporarily */}
+                            {/* <MenuItem value={"greedy"}>Greedy algorithm</MenuItem> */}
+                            {/* <MenuItem value={"bidirectional"}>Bidirectional Search algorithm</MenuItem> */}
                         </Select>
                     </FormControl>
 
-                    <div style={{marginBottom: '20px'}}>
+                    <div>
                         <Button
                             id="locations-button"
                             aria-controls={menuOpen ? "locations-menu" : undefined}
@@ -249,10 +203,9 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                             onClick={(e) => {setMenuAnchor(e.currentTarget);}}
                             variant="contained"
                             disableElevation
-                            fullWidth
-                            style={{ backgroundColor: "#404156", color: "#fff", textTransform: "none", fontSize: 16, justifyContent: "start", paddingBlock: 8 }}
+                            style={{ backgroundColor: "#404156", color: "#fff", textTransform: "none", fontSize: 16, paddingBlock: 8, justifyContent: "start" }}
                         >
-                            Preset Locations
+                            Locations
                         </Button>
                         <Menu
                             id="locations-menu"
@@ -262,17 +215,12 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                             MenuListProps={{
                                 "aria-labelledby": "locations-button",
                                 sx: {
-                                    backgroundColor: "#404156",
-                                    width: menuAnchor ? menuAnchor.clientWidth : undefined // Make menu same width as button
+                                    backgroundColor: "#404156"
                                 }
                             }}
                             anchorOrigin={{
-                                vertical: "bottom",
-                                horizontal: "left",
-                            }}
-                            transformOrigin={{
                                 vertical: "top",
-                                horizontal: "left",
+                                horizontal: "right",
                             }}
                         >
                             {LOCATIONS.map(location => 
@@ -284,14 +232,20 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                         </Menu>
                     </div>
 
-                    <div className="side slider-container" style={{marginBottom: '10px'}}>
+                    <div className="side slider-container">
                         <Typography id="area-slider" >
                             Area radius: {settings.radius}km ({(settings.radius / 1.609).toFixed(1)}mi)
                         </Typography>
-                        <Slider disabled={(started && !animationEnded)} min={2} max={20} step={1} value={settings.radius} onChangeCommitted={(event, value) => { changeRadius(value); }} onChange={(e, newValue) => { setSettings(prev => ({...prev, radius: Number(newValue)})); }} className="slider" aria-labelledby="area-slider" style={{ marginBottom: 1 }} 
+                        <Slider disabled={started && !animationEnded} min={2} max={20} step={1} value={settings.radius} 
+                                onChange={(e, newValue) => { 
+                                    const newRadius = Number(newValue);
+                                    setSettings(prev => ({...prev, radius: newRadius })); 
+                                    // Call changeRadius only on commit if that's the desired behavior
+                                }} 
+                                onChangeCommitted={(e, newValue) => { changeRadius(Number(newValue)); }} // Ensure changeRadius gets the value
+                                className="slider" aria-labelledby="area-slider" style={{ marginBottom: 1 }} 
                             marks={[
-                                { value: 2, label: "2km" },
-                                { value: 20, label: "20km" }
+                                { value: 2, label: "2km" }, { value: 20, label: "20km" }
                             ]} 
                         />
                     </div>
@@ -300,7 +254,9 @@ const Interface = forwardRef(({ canStart, started, animationEnded, pathRealDista
                         <Typography id="speed-slider" >
                             Animation speed
                         </Typography>
-                        <Slider min={1} max={30} value={settings.speed} onChange={(e, newValue) => { setSettings(prev => ({...prev, speed: Number(newValue)})); }} className="slider" aria-labelledby="speed-slider" style={{ marginBottom: 1 }} />
+                        <Slider min={1} max={30} value={settings.speed} 
+                                onChange={(e, newValue) => { setSettings(prev => ({...prev, speed: Number(newValue)})); }} 
+                                className="slider" aria-labelledby="speed-slider" style={{ marginBottom: 1 }} />
                     </div>
                 </div>
             </Drawer>
