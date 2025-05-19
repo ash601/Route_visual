@@ -1,4 +1,3 @@
-import AStar from "./algorithms/AStar";
 import Dijkstra from "./algorithms/Dijkstra";
 import PathfindingAlgorithm from "./algorithms/PathfindingAlgorithm";
 
@@ -35,14 +34,11 @@ export default class PathfindingState {
     start(algorithmType) {
         this.reset();
         switch(algorithmType) {
-            case "astar":
-                this.algorithm = new AStar();
-                break;
             case "dijkstra":
                 this.algorithm = new Dijkstra();
                 break;
             default:
-                this.algorithm = new AStar(); 
+                this.algorithm = new Dijkstra();
                 break;
         }
         this.algorithm.start(this.startNode, this.endNode);
